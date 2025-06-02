@@ -58,7 +58,7 @@ ui <- page_sidebar(
                    success ="#86C7ED"),
 
   # Add title
-  title = "Effectiveness of DemoCo App Free Trial by Customer Segment",
+  title = "Shiny Test",
 
   # Add sidebar elements
   sidebar = sidebar(title = "Select a segment of data to view",
@@ -74,19 +74,8 @@ ui <- page_sidebar(
                       plotOutput("line")),
                  card(card_header("Conversion rates"),
                       plotOutput("bar")),
-                 value_box(title = "Recommended Trial",
-                           value = textOutput("recommended_eval"),
-                           theme_color = "secondary"),
-                 value_box(title = "Customers",
-                           value = textOutput("number_of_customers"),
-                           theme_color = "secondary"),
-                 value_box(title = "Avg Spend",
-                           value = textOutput("average_spend"),
-                           theme_color = "secondary"),
-                 card(card_header("Conversion rates by subgroup"),
-                      tableOutput("table")),
-                 col_widths = c(8, 4, 4, 4, 4, 12),
-                 row_heights = c(4, 1.5, 3))
+                 col_widths = c(12, 12),
+                 row_heights = c(4, 4))
 )
 
 # Define the Shiny server function
@@ -130,35 +119,6 @@ server <- function(input, output) {
              contract %in% selected_contracts())
   })
 
-  # Render text for recommended trial
-  output$recommended_eval <- renderText({
-    recommendation <-
-      filtered_expansions() |>
-      group_by(evaluation) |>
-      summarise(rate = mean(outcome == "Won")) |>
-      filter(rate == max(rate)) |>
-      pull(evaluation)
-
-    as.character(recommendation[1])
-  })
-
-  # Render text for number of customers
-  output$number_of_customers <- renderText({
-    sum(filtered_expansions()$outcome == "Won") |>
-      format(big.mark = ",")
-  })
-
-  # Render text for average spend
-  output$average_spend <- renderText({
-      x <-
-        filtered_expansions() |>
-        filter(outcome == "Won") |>
-        summarise(spend = round(mean(amount))) |>
-        pull(spend)
-
-      str_glue("${x}")
-  })
-
   # Render line plot for conversions over time
   output$line <- renderPlot({
     ggplot(conversions(), aes(x = date, y = n, color = evaluation)) +
@@ -179,13 +139,6 @@ server <- function(input, output) {
         scale_y_continuous(limits = c(0, 100))
   })
 
-  # Render table for conversion rates by subgroup
-  output$table <- renderTable({
-    groups() |>
-      select(industry, propensity, contract, evaluation, success_rate) |>
-      pivot_wider(names_from = evaluation, values_from = success_rate)
-  },
-  digits = 0)
 }
 
 # Create the Shiny app
